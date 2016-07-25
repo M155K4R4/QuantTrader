@@ -31,6 +31,7 @@ class PortfolioHandler(object):
         self.position_sizer = position_sizer
         self.risk_manager = risk_manager
         self.portfolio = Portfolio(price_handler, initial_cash)
+        self.cur_time = None  # Wait until first market event
 
     def _create_order_from_signal(self, signal_event):
         """
@@ -92,14 +93,17 @@ class PortfolioHandler(object):
         initial_order = self._create_order_from_signal(signal_event)
         # Size the quantity of the initial order
         sized_order = self.position_sizer.size_order(
-            self.portfolio, initial_order
+            self.portfolio, initial_order, self.cur_time
         )
-        # Refine or eliminate the order via the risk manager overlay
-        order_events = self.risk_manager.refine_orders(
-            self.portfolio, sized_order
-        )
-        # Place orders onto events queue
-        self._place_orders_onto_queue(order_events)
+        # If the order has been cancelled (setting quantity to zero)
+        # then don't place any orders, otherwise check with risk manager
+        if sized_order.quantity != 0:
+            # Refine or eliminate the order via the risk manager overlay
+            order_events = self.risk_manager.refine_orders(
+                self.portfolio, sized_order
+            )
+            # Place orders onto events queue
+            self._place_orders_onto_queue(order_events)
 
     def on_fill(self, fill_event):
         """
@@ -114,10 +118,11 @@ class PortfolioHandler(object):
         """
         self._convert_fill_to_portfolio_update(fill_event)
 
-    def update_portfolio_value(self):
+    def update_portfolio_value(self, cur_time):
         """
         Update the portfolio to reflect current market value as
         based on last bid/ask of each ticker.
         """
+        self.cur_time = cur_time
         self.portfolio._reset_values()
         self.portfolio._update_portfolio()
