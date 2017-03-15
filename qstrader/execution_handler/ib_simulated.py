@@ -26,6 +26,7 @@ class IBSimulatedExecutionHandler(AbstractExecutionHandler):
         self.events_queue = events_queue
         self.price_handler = price_handler
         self.compliance = compliance
+        self.total_commission = 0.0
 
     def calculate_ib_commission(self, quantity, fill_price):
         """
@@ -63,12 +64,12 @@ class IBSimulatedExecutionHandler(AbstractExecutionHandler):
                 else:
                     fill_price = bid
             else:
-                close_price = self.price_handler.get_last_close(ticker)
-                fill_price = close_price
+                fill_price = self.price_handler.get_last_close(ticker)
 
             # Set a dummy exchange and calculate trade commission
             exchange = "ARCA"
             commission = self.calculate_ib_commission(quantity, fill_price)
+            self.total_commission += PriceParser.display(commission)
 
             # Create the FillEvent and place on the events queue
             fill_event = FillEvent(

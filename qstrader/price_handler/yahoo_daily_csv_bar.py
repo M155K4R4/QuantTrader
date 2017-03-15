@@ -154,6 +154,7 @@ class YahooDailyCsvBarPriceHandler(AbstractBarPriceHandler):
                 "adj_close_ret"
             ] = cur_adj_close / prev_adj_close - 1.0
             self.adj_close_returns.append(self.tickers[ticker]["adj_close_ret"])
+        self.tickers[ticker]["open"] = event.open_price
         self.tickers[ticker]["close"] = event.close_price
         self.tickers[ticker]["adj_close"] = event.adj_close_price
         self.tickers[ticker]["timestamp"] = event.time

@@ -4,7 +4,7 @@ from ..compat import queue
 from ..event import EventType
 from ..price_handler.yahoo_daily_csv_bar import YahooDailyCsvBarPriceHandler
 from ..price_parser import PriceParser
-from ..position_sizer.fixed import FixedPositionSizer
+from ..position_sizer.naive import NaivePositionSizer
 from ..risk_manager.example import ExampleRiskManager
 from ..portfolio_handler import PortfolioHandler
 from ..compliance.example import ExampleCompliance
@@ -49,6 +49,7 @@ class Backtest(object):
         self.benchmark = benchmark
         self._config_backtest()
         self.cur_time = None
+        self.orders_queue = queue.Queue()
 
     def _config_backtest(self):
         """
@@ -63,7 +64,7 @@ class Backtest(object):
             )
 
         if self.position_sizer is None:
-            self.position_sizer = FixedPositionSizer()
+            self.position_sizer = NaivePositionSizer()
 
         if self.risk_manager is None:
             self.risk_manager = ExampleRiskManager()
@@ -122,11 +123,22 @@ class Backtest(object):
                         self.strategy.calculate_signals(event)
                         self.portfolio_handler.update_portfolio_value()
                         self.statistics.update(event.time, self.portfolio_handler)
+                        # TODO: Change this to handle multiple tickers and make it a list!! 
+                        #try:
+                        #    order = self.orders_queue.get(False)
+                        #except queue.Empty:
+                        #    pass
+                        #else:
+                        #    if order.ticker == event.ticker:
+                        #        self.execution_handler.execute_order(order)
+                        #    else:
+                        #        self.orders_queue.put(order)
                     elif event.type == EventType.SENTIMENT:
                         self.strategy.calculate_signals(event)
                     elif event.type == EventType.SIGNAL:
                         self.portfolio_handler.on_signal(event)
                     elif event.type == EventType.ORDER:
+                        #self.orders_queue.put(event)
                         self.execution_handler.execute_order(event)
                     elif event.type == EventType.FILL:
                         self.portfolio_handler.on_fill(event)

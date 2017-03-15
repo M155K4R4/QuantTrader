@@ -171,7 +171,7 @@ class OrderEvent(Event):
     The order contains a ticker (e.g. GOOG), action (BOT or SLD)
     and quantity.
     """
-    def __init__(self, ticker, action, quantity):
+    def __init__(self, ticker, action, quantity, timestamp=None):
         """
         Initialises the OrderEvent.
 
@@ -181,6 +181,7 @@ class OrderEvent(Event):
         quantity - The quantity of shares to transact.
         """
         self.type = EventType.ORDER
+        self.timestamp = timestamp
         self.ticker = ticker
         self.action = action
         self.quantity = quantity

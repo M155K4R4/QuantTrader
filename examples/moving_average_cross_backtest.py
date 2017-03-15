@@ -8,6 +8,7 @@ from qstrader.strategy.base import AbstractStrategy
 from qstrader.event import SignalEvent, EventType
 from qstrader.compat import queue
 from qstrader.trading_session.backtest import Backtest
+from qstrader.price_parser import PriceParser
 
 
 class MovingAverageCrossStrategy(AbstractStrategy):

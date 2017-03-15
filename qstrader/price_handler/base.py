@@ -95,6 +95,20 @@ class AbstractBarPriceHandler(AbstractPriceHandler):
         self.tickers[ticker]["adj_close"] = event.adj_close_price
         self.tickers[ticker]["timestamp"] = event.time
 
+    def get_last_open(self, ticker):
+        """
+        Returns the most recent actual (unadjusted) closing price.
+        """
+        if ticker in self.tickers:
+            open_price = self.tickers[ticker]["open"]
+            return open_price
+        else:
+            print(
+                "Open price for ticker %s is not "
+                "available from the YahooDailyBarPriceHandler."
+            )
+            return None
+
     def get_last_close(self, ticker):
         """
         Returns the most recent actual (unadjusted) closing price.

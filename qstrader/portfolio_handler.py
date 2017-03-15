@@ -58,6 +58,10 @@ class PortfolioHandler(object):
         to ultimately be executed by the ExecutionHandler.
         """
         for order_event in order_list:
+            order_event.timestamp = \
+                self.price_handler.get_last_timestamp(
+                    order_event.ticker
+                )
             self.events_queue.put(order_event)
 
     def _convert_fill_to_portfolio_update(self, fill_event):
@@ -95,7 +99,7 @@ class PortfolioHandler(object):
         full OrderEvent objects and sent back to the events queue.
         """
         # Create the initial order list from a signal event
-        initial_order = self._create_order_from_signal(signal_event)
+        initial_order = self._create_order_from_signal(signal_event)      
         # Size the quantity of the initial order
         sized_order = self.position_sizer.size_order(
             self.portfolio, initial_order
