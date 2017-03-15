@@ -1,0 +1,217 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Welcome to QSTrader’s documentation! &#8212; QSTrader 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="QSTrader 0.1.0 documentation" href="#" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-qstrader-s-documentation">
+<h1>Welcome to QSTrader&#8217;s documentation!<a class="headerlink" href="#welcome-to-qstrader-s-documentation" title="Permalink to this headline">¶</a></h1>
+<a class="reference external image-reference" href="https://travis-ci.org/mhallsmoore/qstrader"><img alt="https://travis-ci.org/mhallsmoore/qstrader.svg?branch=master" src="https://travis-ci.org/mhallsmoore/qstrader.svg?branch=master" /></a>
+<a class="reference external image-reference" href="https://coveralls.io/github/mhallsmoore/qstrader?branch=master"><img alt="https://coveralls.io/repos/github/mhallsmoore/qstrader/badge.svg?branch=master" src="https://coveralls.io/repos/github/mhallsmoore/qstrader/badge.svg?branch=master" /></a>
+<a class="reference external image-reference" href="https://github.com/mhallsmoore/qstrader/blob/master/LICENSE"><img alt="https://img.shields.io/badge/license-MIT%20License-blue.svg" src="https://img.shields.io/badge/license-MIT%20License-blue.svg" /></a>
+<a class="reference external image-reference" href="https://coveralls.io/github/mhallsmoore/qstrader?branch=master"><img alt="https://img.shields.io/badge/python-2.7%2C%203.4%2C%203.5-blue.svg" src="https://img.shields.io/badge/python-2.7%2C%203.4%2C%203.5-blue.svg" /></a>
+<p>QSTrader is an open source Python library for event-driven backtesting and live trading of the US equities markets with a focus on realistic simulation, modularity and extensibility. It is currently in an alpha state but is under heavy development.</p>
+<p>QSTrader is designed for &#8220;power users&#8221; who want a broad framework to tie their systematic trading together, but which provides extensive customisation in the areas of market data handling, portfolio/order management, risk, position sizing and execution.</p>
+<p>It has been designed both for a wide variety of use cases, from end-of-day retail traders through to small intraday quant funds trading at intraday frequencies.</p>
+<p>The software is provided under a permissive commercial-friendly &#8220;MIT&#8221; license (<a class="reference internal" href="#ref-license"><span class="std std-ref">see below</span></a>).</p>
+<p>Check out the <a class="reference internal" href="getting-started.html"><span class="doc">getting started guide</span></a>!</p>
+<img alt="https://s3.amazonaws.com/quantstart/media/images/qstrader-moving-average-cross-tearsheet.png" src="https://s3.amazonaws.com/quantstart/media/images/qstrader-moving-average-cross-tearsheet.png" />
+<div class="section" id="features">
+<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>Event-Driven Architecture</strong> - QSTrader is completely event-driven, allowing backtesting and live trading at a wide range of frequencies. The event-driven architecture allows &#8220;event generator&#8221; modules to be added easily, such as sentiment analysis signal generators, market data generators and risk manager generators.</li>
+<li><strong>Modular Design</strong> - QSTrader ships with basic modules for backtesting and live trading. While these modules contain sensible, realistic defaults, they are designed to be fully extended and customised for those with more specific requirements.</li>
+<li><strong>Data</strong> - QSTrader supports multiple data source formats, predominantly CSV files of the major vendors such as Yahoo Finance and DTN IQFeed. It supports tick-resolution (top of order book bid/ask) as well as OHLCV &#8220;bar&#8221; resolution data on various time scales. It is straightforward to add other vendors into the system by subclassing the PriceHandler module.</li>
+<li><strong>Backtesting</strong> - QSTrader provides an efficient, out-of-the-box backtesting system for daily equities using Yahoo Finance data, with realistic position-handling and sensible defaults for transaction cost simulation. All behaviour is fully customisable allowing you to define your own transaction cost methodology.</li>
+<li><strong>Performance Metrics</strong> - QSTrader supports both portfolio-level and trade-level performance measurement, displayed through a comprehensive visual &#8220;tearsheet&#8221; for a portfolio. Backtesting statistics can be exported and viewed through other reporting tools, such as Excel.</li>
+</ul>
+</div>
+<div class="section" id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>The <a class="reference internal" href="getting-started.html"><span class="doc">QSTrader tutorial</span></a></li>
+<li><span class="xref doc">QSTrader examples</span> and <span class="xref doc">API reference</span></li>
+<li>The <a class="reference external" href="https://www.quantstart.com/articles/Announcing-the-QuantStart-Advanced-Trading-Infrastructure-Article-Series">original announcement post</a> on QuantStart.com</li>
+</ul>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>QSTrader is in an early alpha state at the moment. It should only be used for <strong>exploratory backtesting research</strong>. The installation procedure is a little more involved than a standard Python package as it has not yet been added to the Python package repository.</p>
+<p><strong>Ubuntu Linux is the recommended platform</strong> on which to install QSTrader, but it will also work on Windows or Mac OSX under the <a class="reference external" href="https://www.continuum.io/downloads">Anaconda distribution</a>.</p>
+<p>The following steps will create a virtual environment directory with Python 3 and then activate the environment. Please change <code class="code docutils literal"><span class="pre">~/venv/qstraderp3</span></code> to your preferred virtual environment directory in the following:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">mkdir</span> <span class="o">-</span><span class="n">p</span> <span class="o">~/</span><span class="n">venv</span><span class="o">/</span><span class="n">qstraderp3</span>
+<span class="n">cd</span> <span class="o">~/</span><span class="n">venv</span><span class="o">/</span><span class="n">qstraderp3</span>
+<span class="n">virtualenv</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span> <span class="o">-</span><span class="n">p</span> <span class="n">python3</span> <span class="o">.</span>
+<span class="n">source</span> <span class="o">~/</span><span class="n">venv</span><span class="o">/</span><span class="n">qstraderp3</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>
+</pre></div>
+</div>
+<p>At this point it is necessary to use pip to install QSTrader as a library and then manually install the requirements. The following steps will take some time (5-10 minutes) as QSTrader relies on NumPy, SciPy, Pandas, Matplotlib as well as many other libraries and hence they will all need to compile:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">git</span><span class="o">+</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">mhallsmoore</span><span class="o">/</span><span class="n">qstrader</span><span class="o">.</span><span class="n">git</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">raw</span><span class="o">.</span><span class="n">githubusercontent</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">mhallsmoore</span><span class="o">/</span><span class="n">qstrader</span><span class="o">/</span><span class="n">master</span><span class="o">/</span><span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+<p>Now that the library itself and requirements have been installed it is necessary to create the default directories for the data and output. This will allow the example code to be run:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">mkdir</span> <span class="o">-</span><span class="n">p</span> <span class="o">~/</span><span class="n">qstrader</span><span class="o">/</span><span class="n">examples</span> <span class="o">~/</span><span class="n">data</span> <span class="o">~/</span><span class="n">out</span>
+</pre></div>
+</div>
+<p>Now that the code has been installed and example directories created the <a class="reference internal" href="getting-started.html"><span class="doc">getting started guide</span></a> should be consulted on how to run some trading strategy backtests.</p>
+</div>
+<div class="section" id="development">
+<h2>Development<a class="headerlink" href="#development" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>Cross Platform</strong> - QSTrader is written in the Python programming language for straightforward cross-platform support.</li>
+<li><strong>Testing</strong> - QSTrader contains a suite of unit tests for the majority of its calculation code and these tests are executed upon every change to the code. Additional tests are constantly added for both current and new features.</li>
+<li><strong>Collaboration</strong> - As QSTrader is open source many developers collaborate to improve the software. New features are added frequently. Any bugs are quickly determined and fixed.</li>
+</ul>
+<p><em>The project is constantly being developed so unfortunately it is likely that the current API will experience backwards incompatibility until a mature beta version has been produced.</em></p>
+</div>
+<div class="section" id="contributors">
+<h2>Contributors<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/mhallsmoore/">Michael Halls-Moore</a></li>
+<li><a class="reference external" href="https://github.com/ryankennedyio">Ryan Kennedy</a></li>
+<li><a class="reference external" href="https://github.com/femtotrader">FemtoTrader</a></li>
+<li><a class="reference external" href="https://github.com/nwillemse">Nick Willemse</a></li>
+</ul>
+</div>
+<div class="section" id="sponsors">
+<h2>Sponsors<a class="headerlink" href="#sponsors" title="Permalink to this headline">¶</a></h2>
+<a class="reference external image-reference" href="https://www.quantstart.com/"><img alt="_images/qs-logo.png" src="_images/qs-logo.png" /></a>
+</div>
+<div class="section" id="contact-support">
+<span id="ref-license"></span><h2>Contact/Support<a class="headerlink" href="#contact-support" title="Permalink to this headline">¶</a></h2>
+<p>To report an issue with QSTrader or to suggest a feature please use the <a class="reference external" href="https://github.com/mhallsmoore/qstrader/issues/">issue tracker</a>.</p>
+<p>To interact with QSTrader developers email <a class="reference external" href="mailto:mike&#37;&#52;&#48;quantstart&#46;com">mike<span>&#64;</span>quantstart<span>&#46;</span>com</a> for a Slack invite.</p>
+</div>
+<div class="section" id="license-terms">
+<h2>License Terms<a class="headerlink" href="#license-terms" title="Permalink to this headline">¶</a></h2>
+<p>Copyright (c) 2015-2017 Michael Halls-Moore</p>
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &#8220;Software&#8221;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+<p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+<p>THE SOFTWARE IS PROVIDED &#8220;AS IS&#8221;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+</div>
+<div class="section" id="trading-disclaimer">
+<h2>Trading Disclaimer<a class="headerlink" href="#trading-disclaimer" title="Permalink to this headline">¶</a></h2>
+<p>Trading equities on margin carries a high level of risk, and may not be suitable for all investors. Past performance is not indicative of future results. The high degree of leverage can work against you as well as for you. Before deciding to invest in equities you should carefully consider your investment objectives, level of experience, and risk appetite. The possibility exists that you could sustain a loss of some or all of your initial investment and therefore you should not invest money that you cannot afford to lose. You should be aware of all the risks associated with equities trading, and seek advice from an independent financial advisor if you have any doubts.</p>
+</div>
+<div class="section" id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to QSTrader&#8217;s documentation!</a><ul>
+<li><a class="reference internal" href="#features">Features</a></li>
+<li><a class="reference internal" href="#getting-started">Getting Started</a></li>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#development">Development</a></li>
+<li><a class="reference internal" href="#contributors">Contributors</a></li>
+<li><a class="reference internal" href="#sponsors">Sponsors</a></li>
+<li><a class="reference internal" href="#contact-support">Contact/Support</a></li>
+<li><a class="reference internal" href="#license-terms">License Terms</a></li>
+<li><a class="reference internal" href="#trading-disclaimer">Trading Disclaimer</a></li>
+<li><a class="reference internal" href="#contents">Contents</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Michael Halls-Moore.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/index.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
