@@ -47,9 +47,7 @@ Getting Started
 ---------------
 
 * The :doc:`QSTrader tutorial </getting-started>`
-* :doc:`QSTrader examples </examples>` and :doc:`API reference </api>`
 * The `original announcement post <https://www.quantstart.com/articles/Announcing-the-QuantStart-Advanced-Trading-Infrastructure-Article-Series>`_ on QuantStart.com
-
 
 Installation
 ------------
@@ -125,18 +123,3 @@ Trading Disclaimer
 ------------------
 
 Trading equities on margin carries a high level of risk, and may not be suitable for all investors. Past performance is not indicative of future results. The high degree of leverage can work against you as well as for you. Before deciding to invest in equities you should carefully consider your investment objectives, level of experience, and risk appetite. The possibility exists that you could sustain a loss of some or all of your initial investment and therefore you should not invest money that you cannot afford to lose. You should be aware of all the risks associated with equities trading, and seek advice from an independent financial advisor if you have any doubts.
-
-
-Contents
---------
-
-.. toctree::
-   :maxdepth: 2
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-

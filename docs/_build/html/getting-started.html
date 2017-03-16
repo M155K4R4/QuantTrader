@@ -44,6 +44,273 @@
             
   <div class="section" id="getting-started-with-qstrader">
 <h1>Getting Started with QSTrader<a class="headerlink" href="#getting-started-with-qstrader" title="Permalink to this headline">¶</a></h1>
+<p>Author: Michael Halls-Moore</p>
+<div class="section" id="introduction-to-backtesting-with-qstrader">
+<h2>Introduction to Backtesting with QSTrader<a class="headerlink" href="#introduction-to-backtesting-with-qstrader" title="Permalink to this headline">¶</a></h2>
+<p>This section will provide a tutorial on how to use the QSTrader library to begin <strong>backtesting</strong> your strategies.</p>
+<p>To introduce basic QSTrader functionality an extremely simple &#8220;buy and hold&#8221; strategy will be demonstrated. This simply goes long one hundred shares of SPY for the duration of the backtest.</p>
+<p>Then a more interesting example will be provided, which uses a position-sizing module to adjust the weights of a simple ETF portfolio, consisting of SPY and AGG, once a month.</p>
+<p>Finally a simple trend-following strategy will be presented that uses two simple moving averages in a crossover signal generator on AAPL.</p>
+</div>
+<div class="section" id="a-basic-backtesting-example-buy-and-hold">
+<h2>A Basic Backtesting Example: Buy And Hold<a class="headerlink" href="#a-basic-backtesting-example-buy-and-hold" title="Permalink to this headline">¶</a></h2>
+<p><em>Please note that the full code for this example can be found in</em> <a class="reference external" href="https://github.com/mhallsmoore/qstrader/blob/master/examples/buy_and_hold_backtest.py">buy_and_hold_backtest.py</a>. <em>However if you wish to create a new file then please read on.</em></p>
+<p>In this example we are going to demonstrate a very straightforward &#8220;trading&#8221; scenario of buying a single equity and holding it until the backtest period ends. While this is far from the most exciting strategy, it will serve to show us how the basic QSTrader API is utilised.</p>
+<p>Prior to the creation of the backtest file it is necessary to download some market data for the SPY ticker upon which the buy and hold strategy will be carried out on.</p>
+<p>To do this it is necessary to have followed the installation instructions above so that the <code class="code docutils literal"><span class="pre">~/data</span></code> and <code class="code docutils literal"><span class="pre">~/out</span></code> directories exist. Once they do the following line can be called within a Linux shell:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="o">~/</span><span class="n">data</span>
+<span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">raw</span><span class="o">.</span><span class="n">githubusercontent</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">mhallsmoore</span><span class="o">/</span><span class="n">qstrader</span><span class="o">/</span><span class="n">master</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">SPY</span><span class="o">.</span><span class="n">csv</span>
+</pre></div>
+</div>
+<p>This will place the CSV file of SPY OHLCV prices into the correct directory for QSTrader to pick it up. Now that the data has been downloaded the strategy backtesting code can be created.</p>
+<p>Firstly let&#8217;s create a new file called <code class="code docutils literal"><span class="pre">buy_and_hold_backtest.py</span></code> to store our trading logic. We begin by importing the necessary modules:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># buy_and_hold_backtest.py</span>
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+
+<span class="kn">from</span> <span class="nn">qstrader</span> <span class="k">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">qstrader.strategy.base</span> <span class="k">import</span> <span class="n">AbstractStrategy</span>
+<span class="kn">from</span> <span class="nn">qstrader.event</span> <span class="k">import</span> <span class="n">SignalEvent</span><span class="p">,</span> <span class="n">EventType</span>
+<span class="kn">from</span> <span class="nn">qstrader.compat</span> <span class="k">import</span> <span class="n">queue</span>
+<span class="kn">from</span> <span class="nn">qstrader.trading_session</span> <span class="k">import</span> <span class="n">TradingSession</span>
+</pre></div>
+</div>
+<p>The Python <code class="code docutils literal"><span class="pre">datetime</span></code> library is needed to create the starting and ending dates of our strategy.</p>
+<p>One of the most important objects in QSTrader is the <code class="code docutils literal"><span class="pre">AbstractStrategy</span></code> class. All trading strategy objects are derived from this class and as such it must be imported. The trading strategy &#8220;logic&#8221; will live within here.</p>
+<p>The strategy object tells the portfolio and order management system which orders to generate by sending it a <code class="code docutils literal"><span class="pre">SignalEvent</span></code>. This contains the ticker to be traded (e.g. AAPL or GOOG), the &#8216;action&#8217;, e.g. &#8220;buy&#8221; or &#8220;sell&#8221; and finally the number of units to transact.</p>
+<p>The <code class="code docutils literal"><span class="pre">queue</span></code> object stores all of the events generated by the backtester and ties the entire system together.</p>
+<p>Finally, the abstract <code class="code docutils literal"><span class="pre">TradingSession</span></code> object is used to carry out the actual backtesting logic itself.</p>
+<p>We will go into these objects in more detail in later, more complex, examples.</p>
+<p>The next step is to define the <code class="code docutils literal"><span class="pre">BuyAndHoldStrategy</span></code> class:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">BuyAndHoldStrategy</span><span class="p">(</span><span class="n">AbstractStrategy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A testing strategy that simply purchases (longs) an asset</span>
+<span class="sd">    upon first receipt of the relevant bar event and</span>
+<span class="sd">    then holds until the completion of a backtest.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">ticker</span><span class="p">,</span> <span class="n">events_queue</span><span class="p">,</span>
+        <span class="n">base_quantity</span><span class="o">=</span><span class="mi">100</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ticker</span> <span class="o">=</span> <span class="n">ticker</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events_queue</span> <span class="o">=</span> <span class="n">events_queue</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_quantity</span> <span class="o">=</span> <span class="n">base_quantity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bars</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">invested</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">calculate_signals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">event</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="p">[</span><span class="n">EventType</span><span class="o">.</span><span class="n">BAR</span><span class="p">,</span> <span class="n">EventType</span><span class="o">.</span><span class="n">TICK</span><span class="p">]</span> <span class="ow">and</span>
+            <span class="n">event</span><span class="o">.</span><span class="n">ticker</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ticker</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">invested</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">bars</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">signal</span> <span class="o">=</span> <span class="n">SignalEvent</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">ticker</span><span class="p">,</span> <span class="s2">&quot;BOT&quot;</span><span class="p">,</span>
+                    <span class="n">suggested_quantity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_quantity</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">events_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">invested</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bars</span> <span class="o">+=</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p>This class contains two methods.</p>
+<p>The first is the usual initialisation method <code class="code docutils literal"><span class="pre">__init__</span></code>. This method simply assigns many of the parameters to their respective class members. In particular it takes a <code class="code docutils literal"><span class="pre">ticker</span></code> parameter. This is the symbol upon which the strategy will operate, such as GOOG or MSFT. In addition it takes a handle to the events queue so that it can place events onto the queue. It also requires a &#8216;base quantity&#8217; of shares to transact, which in this case is set to a default of 100 shares.</p>
+<p>The second method is <code class="code docutils literal"><span class="pre">calculate_signals</span></code>, which contains the &#8220;trading logic&#8221; itself. Since this class inherits from <code class="code docutils literal"><span class="pre">AbstractStrategy</span></code> it <strong>must</strong> possess this method, so make sure to include it in all of your derived strategy classes. The method takes an <code class="code docutils literal"><span class="pre">Event</span></code> object as a parameter and checks to see if that event is either of type &#8220;Bar&#8221; or &#8220;Tick&#8221;. That is, whether it is a market data event. It also checks if the event is also equal to the particular ticker that the strategy is acting upon.</p>
+<p>If these conditions are met then the strategy checks to see if it is already invested and whether this is the first time it has seen the market data. If so it generates a new <code class="code docutils literal"><span class="pre">SignalEvent</span></code> with the ticker, the &#8220;BOT&#8221; buy action and a suggested quantity equal to the base quantity.</p>
+<p>Why a <em>suggested</em> quantity and not an <em>actual</em> quantity? This is because other modules in the software, including the PositionSizer and the RiskManager, have the ability to modify order sizes in order to maintain imposed position-sizing and risk management rules.</p>
+<p>Once the signal is generated it is placed onto the events queue and the strategy is set to be &#8220;invested&#8221;.</p>
+<p>Now that the strategy class is defined it is necessary to define a <code class="code docutils literal"><span class="pre">run</span></code> function that will dictate how the backtest is to be carried out:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">testing</span><span class="p">,</span> <span class="n">tickers</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="c1"># Backtest information</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Buy and Hold Example on </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">tickers</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="n">initial_equity</span> <span class="o">=</span> <span class="mf">10000.0</span>
+    <span class="n">start_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">end_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2014</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Use the Buy and Hold Strategy</span>
+    <span class="n">events_queue</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+    <span class="n">strategy</span> <span class="o">=</span> <span class="n">BuyAndHoldStrategy</span><span class="p">(</span><span class="n">tickers</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">events_queue</span><span class="p">)</span>
+
+    <span class="c1"># Set up the backtest</span>
+    <span class="n">backtest</span> <span class="o">=</span> <span class="n">TradingSession</span><span class="p">(</span>
+        <span class="n">config</span><span class="p">,</span> <span class="n">strategy</span><span class="p">,</span> <span class="n">tickers</span><span class="p">,</span>
+        <span class="n">initial_equity</span><span class="p">,</span> <span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span><span class="p">,</span>
+        <span class="n">events_queue</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span>
+    <span class="p">)</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">backtest</span><span class="o">.</span><span class="n">start_trading</span><span class="p">(</span><span class="n">testing</span><span class="o">=</span><span class="n">testing</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">results</span>
+</pre></div>
+</div>
+<p>The function takes a <code class="code docutils literal"><span class="pre">config</span></code> object, a <code class="code docutils literal"><span class="pre">testing</span></code> flag, a list of <code class="code docutils literal"><span class="pre">tickers</span></code> and an output <code class="code docutils literal"><span class="pre">filename</span></code>.</p>
+<p>The first few lines include the creation of the title for the visualisation tearsheet, the initially account equity in US dollars, as well as starting and ending dates for the backtest (both specified as Python <code class="code docutils literal"><span class="pre">datetime</span></code> objects).</p>
+<p>Subsequently both the <code class="code docutils literal"><span class="pre">events_queue</span></code> queue and the <code class="code docutils literal"><span class="pre">BuyAndHoldStrategy</span></code> are instantiated.</p>
+<p>Finally the <code class="code docutils literal"><span class="pre">TradingSession</span></code> is given the configuration information, the strategy itself, the list of tickers, the initial account equity, the starting/ending dates, the events queue and the tearsheet title.</p>
+<p>To begin the backtest the <code class="code docutils literal"><span class="pre">backtest.start_trading(...)</span></code> method is called. The results are then returned from the <code class="code docutils literal"><span class="pre">run</span></code> function.</p>
+<p>To actually execute all of this code it is necessary to include an <code class="code docutils literal"><span class="pre">if</span> <span class="pre">__name__</span> <span class="pre">==</span> <span class="pre">&quot;__main__&quot;</span></code> directive:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># Configuration data</span>
+    <span class="n">testing</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">DEFAULT_CONFIG_FILENAME</span><span class="p">,</span> <span class="n">testing</span>
+    <span class="p">)</span>
+    <span class="n">tickers</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SPY&quot;</span><span class="p">]</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">run</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">testing</span><span class="p">,</span> <span class="n">tickers</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This simply tells the backtest that this is not a test run. It also obtains the configuration information from the default configuration file. The backtest is carried out on the SPY S&amp;P500 index-tracking ETF by calling the <code class="code docutils literal"><span class="pre">run(...)</span></code> function.</p>
+<p>To execute the code make sure you are in the same directory as <code class="code docutils literal"><span class="pre">buy_and_hold_backtest.py</span></code>, change to your QSTrader virtual environment (e.g. <code class="code docutils literal"><span class="pre">source</span> <span class="pre">~/venv/qstraderp3/bin/activate</span></code> or similar) and type:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ python buy_and_hold_backtest.py
+</pre></div>
+</div>
+<p>The code will loop through all of the SPY OHLCV bars for each trading day between the start and ending dates of the backtest. Once it is finished you will see some brief output along with the following tearsheet:</p>
+<img alt="https://s3.amazonaws.com/quantstart/media/images/qstrader-buy-and-hold-tearsheet.png" src="https://s3.amazonaws.com/quantstart/media/images/qstrader-buy-and-hold-tearsheet.png" />
+<p>The panels consist of a large equity curve, a drawdown chart, a monthly percentage returns heatmap, a yearly returns distribution chart as well as statistics pertaining to the strategy and trades.</p>
+</div>
+<div class="section" id="a-more-interesting-backtesting-example-monthly-rebalanced-portfolio">
+<h2>A More Interesting Backtesting Example: Monthly-Rebalanced Portfolio<a class="headerlink" href="#a-more-interesting-backtesting-example-monthly-rebalanced-portfolio" title="Permalink to this headline">¶</a></h2>
+<p><em>Please note that the full code for this example can be found in</em> <a class="reference external" href="https://github.com/mhallsmoore/qstrader/blob/master/examples/monthly_liquidate_rebalance_backtest.py">monthly_liquidate_rebalance_backtest.py</a>. <em>However if you wish to create a new file then please read on.</em></p>
+<p>In this example we are going to build a long-only mixed ETF portfolio that maintains a dollar-weighted proportion of each ETF that rebalances at the end of every month. In particular we will create a classic &#8220;60/40 US Equities/Bonds&#8221; mix, using the SPY and AGG ETFs.</p>
+<p>At the start of the backtest 60% of our equity will be invested in SPY, while 40% will be invested in AGG. Since the prices will change over the month our dollar proportions will also change. The stocks will both be completely liquidated and repurchased in the correct dollar proportion at the end of every month until the backtest completes.</p>
+<p>Since we are already familiar with the QSTrader interface from above, we will only discuss the aspects that differ from the &#8220;buy and hold&#8221; strategy. As before it is necessary to import some Python libraries as well as the necessary QSTrader modules.</p>
+<p>The only new additions are <code class="code docutils literal"><span class="pre">calendar</span></code> and <code class="code docutils literal"><span class="pre">LiquidateRebalancePositionSizer</span></code>. The former is needed to work out the ending day of the month, while the latter is used to actually rebalance the portfolio by adjusting suggested orders:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># monthly_liquidate_rebalance_backtest.py</span>
+
+<span class="kn">import</span> <span class="nn">calendar</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+
+<span class="kn">from</span> <span class="nn">qstrader</span> <span class="k">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">qstrader.strategy.base</span> <span class="k">import</span> <span class="n">AbstractStrategy</span>
+<span class="kn">from</span> <span class="nn">qstrader.position_sizer.rebalance</span> <span class="k">import</span> <span class="n">LiquidateRebalancePositionSizer</span>
+<span class="kn">from</span> <span class="nn">qstrader.event</span> <span class="k">import</span> <span class="n">SignalEvent</span><span class="p">,</span> <span class="n">EventType</span>
+<span class="kn">from</span> <span class="nn">qstrader.compat</span> <span class="k">import</span> <span class="n">queue</span>
+<span class="kn">from</span> <span class="nn">qstrader.trading_session</span> <span class="k">import</span> <span class="n">TradingSession</span>
+</pre></div>
+</div>
+<p>As before it is necessary to create a strategy class that inherits from <code class="code docutils literal"><span class="pre">AbstractStrategy</span></code>. This will be called <code class="code docutils literal"><span class="pre">MonthlyLiquidateRebalanceStrategy</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MonthlyLiquidateRebalanceStrategy</span><span class="p">(</span><span class="n">AbstractStrategy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A generic strategy that allows monthly rebalancing of a</span>
+<span class="sd">    set of tickers, via full liquidation and dollar-weighting</span>
+<span class="sd">    of new positions.</span>
+
+<span class="sd">    Must be used in conjunction with the</span>
+<span class="sd">    LiquidateRebalancePositionSizer object to work correctly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tickers</span><span class="p">,</span> <span class="n">events_queue</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tickers</span> <span class="o">=</span> <span class="n">tickers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events_queue</span> <span class="o">=</span> <span class="n">events_queue</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tickers_invested</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_invested_list</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_end_of_month</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cur_time</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determine if the current day is at the end of the month.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cur_day</span> <span class="o">=</span> <span class="n">cur_time</span><span class="o">.</span><span class="n">day</span>
+        <span class="n">end_day</span> <span class="o">=</span> <span class="n">calendar</span><span class="o">.</span><span class="n">monthrange</span><span class="p">(</span><span class="n">cur_time</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="n">cur_time</span><span class="o">.</span><span class="n">month</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">cur_day</span> <span class="o">==</span> <span class="n">end_day</span>
+
+    <span class="k">def</span> <span class="nf">_create_invested_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a dictionary with each ticker as a key, with</span>
+<span class="sd">        a boolean value depending upon whether the ticker has</span>
+<span class="sd">        been &quot;invested&quot; yet. This is necessary to avoid sending</span>
+<span class="sd">        a liquidation signal on the first allocation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tickers_invested</span> <span class="o">=</span> <span class="p">{</span><span class="n">ticker</span><span class="p">:</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">ticker</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tickers</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">tickers_invested</span>
+
+    <span class="k">def</span> <span class="nf">calculate_signals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        For a particular received BarEvent, determine whether</span>
+<span class="sd">        it is the end of the month (for that bar) and generate</span>
+<span class="sd">        a liquidation signal, as well as a purchase signal,</span>
+<span class="sd">        for each ticker.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">event</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="p">[</span><span class="n">EventType</span><span class="o">.</span><span class="n">BAR</span><span class="p">,</span> <span class="n">EventType</span><span class="o">.</span><span class="n">TICK</span><span class="p">]</span> <span class="ow">and</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_end_of_month</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">ticker</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">ticker</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tickers_invested</span><span class="p">[</span><span class="n">ticker</span><span class="p">]:</span>
+                <span class="n">liquidate_signal</span> <span class="o">=</span> <span class="n">SignalEvent</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="s2">&quot;EXIT&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">events_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">liquidate_signal</span><span class="p">)</span>
+            <span class="n">long_signal</span> <span class="o">=</span> <span class="n">SignalEvent</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="s2">&quot;BOT&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">events_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">long_signal</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tickers_invested</span><span class="p">[</span><span class="n">ticker</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+</pre></div>
+</div>
+<p>It contains four methods: <code class="code docutils literal"><span class="pre">__init__</span></code>, <code class="code docutils literal"><span class="pre">_end_of_month</span></code>, <code class="code docutils literal"><span class="pre">_create_invested_list</span></code> and <code class="code docutils literal"><span class="pre">calculate_signals</span></code>.</p>
+<p>The initialisation method is similar to the &#8220;buy and hold&#8221; example except that it creates a <code class="code docutils literal"><span class="pre">tickers_invested</span></code> dictionary to store boolean values as to whether a ticker has currently been purchased or not. This is created by the <code class="code docutils literal"><span class="pre">_create_invested_list</span></code> method.</p>
+<p>The <code class="code docutils literal"><span class="pre">_end_of_month</span></code> method is needed to check if the current market data point day is the ending day of the month.</p>
+<p>As with all derived strategy classes the <code class="code docutils literal"><span class="pre">calculate_signals</span></code> method is used to store the trading logic. It checks whether a market event has been received and that it is the ending day of the month. If so, it generates a suggested long signal. The strategy then keeps track of whether that ticker has been &#8220;invested&#8221;.</p>
+<p>The rebalancing logic itself is kept in a class called the <code class="code docutils literal"><span class="pre">LiquidateRebalancePositionSizer</span></code>, which is a derived class from a generic QSTrader object known as a <code class="code docutils literal"><span class="pre">PositionSizer</span></code>.</p>
+<p>The rationale for this class is to allow an overlay module to modify, delete or veto orders based on position-sizing logic. In this instance it is necessary to rebalance the portfolio once a month in order to maintain a dollar-weighted proportion as described above. We don&#8217;t need to provide this logic here as the position sizing object will do it for us. We simply need to import it and make use of it in our <code class="code docutils literal"><span class="pre">Trading</span> <span class="pre">Session</span></code>.</p>
+<p>Let&#8217;s now create the <code class="code docutils literal"><span class="pre">run(...)</span></code> function as we did in the &#8220;buy and hold&#8221; strategy:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">testing</span><span class="p">,</span> <span class="n">tickers</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="c1"># Backtest information</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;Monthly Liquidate/Rebalance on 60%/40% SPY/AGG Portfolio&#39;</span>
+    <span class="p">]</span>
+    <span class="n">initial_equity</span> <span class="o">=</span> <span class="mf">500000.0</span>
+    <span class="n">start_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2006</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">end_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2016</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+
+    <span class="c1"># Use the Monthly Liquidate And Rebalance strategy</span>
+    <span class="n">events_queue</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+    <span class="n">strategy</span> <span class="o">=</span> <span class="n">MonthlyLiquidateRebalanceStrategy</span><span class="p">(</span>
+        <span class="n">tickers</span><span class="p">,</span> <span class="n">events_queue</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Use the liquidate and rebalance position sizer</span>
+    <span class="c1"># with prespecified ticker weights</span>
+    <span class="n">ticker_weights</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;SPY&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span>
+        <span class="s2">&quot;AGG&quot;</span><span class="p">:</span> <span class="mf">0.4</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">position_sizer</span> <span class="o">=</span> <span class="n">LiquidateRebalancePositionSizer</span><span class="p">(</span>
+        <span class="n">ticker_weights</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Set up the backtest</span>
+    <span class="n">backtest</span> <span class="o">=</span> <span class="n">TradingSession</span><span class="p">(</span>
+        <span class="n">config</span><span class="p">,</span> <span class="n">strategy</span><span class="p">,</span> <span class="n">tickers</span><span class="p">,</span>
+        <span class="n">initial_equity</span><span class="p">,</span> <span class="n">start_date</span><span class="p">,</span> <span class="n">end_date</span><span class="p">,</span>
+        <span class="n">events_queue</span><span class="p">,</span> <span class="n">position_sizer</span><span class="o">=</span><span class="n">position_sizer</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">benchmark</span><span class="o">=</span><span class="n">tickers</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">backtest</span><span class="o">.</span><span class="n">start_trading</span><span class="p">(</span><span class="n">testing</span><span class="o">=</span><span class="n">testing</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">results</span>
+</pre></div>
+</div>
+<p>As you can see it is somewhat more complex than before. The title has changed, but the code for the equity and dates are largely the same. The strategy is instantiated as before but new code has been added before the <code class="code docutils literal"><span class="pre">TradingSession</span></code> is instantiated.</p>
+<p>In particular a <code class="code docutils literal"><span class="pre">ticker_weights</span></code> dictionary has been defined that provides tickers as keys and a proportion (between 0 and 1) as values. This is then fed into the instantiated <code class="code docutils literal"><span class="pre">LiquidateRebalancePositionSizer</span></code> position sizing object.</p>
+<p>The <code class="code docutils literal"><span class="pre">TradingSession</span></code> is then created. Most of the parameters are the same as the &#8220;buy and hold&#8221; example but there some new ones here. The <code class="code docutils literal"><span class="pre">position_sizer</span></code> keyword argument is set equal to the <code class="code docutils literal"><span class="pre">position_sizer</span></code> object. A <code class="code docutils literal"><span class="pre">benchmark</span></code> keyword argument is set to the first ticker, namely SPY. This produces a benchmark equity curve in the visual tearsheet at the conclusion of the backtest.</p>
+<p>Finally the backtest is executed with <code class="code docutils literal"><span class="pre">backtest.start_trading(...)</span></code>.</p>
+<p>As before we need to create an <code class="code docutils literal"><span class="pre">if</span> <span class="pre">__name__</span> <span class="pre">==</span> <span class="pre">&quot;__main__&quot;</span></code> directive:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># Configuration data</span>
+    <span class="n">testing</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">DEFAULT_CONFIG_FILENAME</span><span class="p">,</span> <span class="n">testing</span>
+    <span class="p">)</span>
+    <span class="n">tickers</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SPY&quot;</span><span class="p">,</span> <span class="s2">&quot;AGG&quot;</span><span class="p">]</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">run</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">testing</span><span class="p">,</span> <span class="n">tickers</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>It is extremely similar to the one produced for the &#8220;buy and hold&#8221; example except that <code class="code docutils literal"><span class="pre">tickers</span></code> contains both SPY and AGG.</p>
+<p>To run the code (similarly to above) simply type:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ python monthly_liquidate_rebalance_backtest.py
+</pre></div>
+</div>
+<p>The code will loop through all of the SPY and AGG OHLCV bars for each trading day between the start and ending dates of the backtest. Once it is finished you will see some brief output along with the following tearsheet:</p>
+<img alt="https://s3.amazonaws.com/quantstart/media/images/qs-qstrader-monthly-rebalance-spy-agg-tearsheet.png" src="https://s3.amazonaws.com/quantstart/media/images/qs-qstrader-monthly-rebalance-spy-agg-tearsheet.png" />
+<p>As can be seen the performance of the portfolio is not great. It fails to beat the benchmark (in grey) of going long SPY on its own.</p>
+</div>
+<div class="section" id="a-trend-following-backtesting-example-moving-average-crossover">
+<h2>A Trend-Following Backtesting Example: Moving Average Crossover<a class="headerlink" href="#a-trend-following-backtesting-example-moving-average-crossover" title="Permalink to this headline">¶</a></h2>
+</div>
 </div>
 
 
@@ -51,7 +318,18 @@
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper"><div class="relations">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Getting Started with QSTrader</a><ul>
+<li><a class="reference internal" href="#introduction-to-backtesting-with-qstrader">Introduction to Backtesting with QSTrader</a></li>
+<li><a class="reference internal" href="#a-basic-backtesting-example-buy-and-hold">A Basic Backtesting Example: Buy And Hold</a></li>
+<li><a class="reference internal" href="#a-more-interesting-backtesting-example-monthly-rebalanced-portfolio">A More Interesting Backtesting Example: Monthly-Rebalanced Portfolio</a></li>
+<li><a class="reference internal" href="#a-trend-following-backtesting-example-moving-average-crossover">A Trend-Following Backtesting Example: Moving Average Crossover</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
